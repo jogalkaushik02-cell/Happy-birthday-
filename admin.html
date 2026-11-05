@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Birthday Admin Panel 🛠️</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 25px 16px;
+      display: flex;
+      justify-content: center;
+    }
+    .admin-card {
+      width: 100%;
+      max-width: 520px;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 18px;
+      padding: 24px;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.45);
+    }
+    h2 {
+      color: #ff9500;
+      margin-bottom: 6px;
+      font-size: 1.5rem;
+    }
+    p.desc {
+      font-size: 0.85rem;
+      color: #94a3b8;
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #cbd5e1;
+      margin: 14px 0 6px;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 11px 13px;
+      border-radius: 10px;
+      border: 1px solid #475569;
+      background: #0f172a;
+      color: #fff;
+      font-family: inherit;
+      font-size: 0.9rem;
+    }
+    input:focus, textarea:focus {
+      outline: none;
+      border-color: #ff4d00;
+    }
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    button {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 0.92rem;
+      cursor: pointer;
+      transition: transform 0.15s;
+    }
+    button:active { transform: scale(0.97); }
+    .btn-save {
+      background: linear-gradient(135deg, #ff4d00, #ff8800);
+      color: #fff;
+    }
+    .btn-open {
+      background: #334155;
+      color: #f8fafc;
+    }
+    .share-box {
+      margin-top: 20px;
+      padding: 14px;
+      background: #0f172a;
+      border: 1px dashed #ff9500;
+      border-radius: 12px;
+      display: none;
+    }
+    .share-box input {
+      margin-top: 8px;
+      font-size: 0.8rem;
+      color: #38bdf8;
+    }
+    .copy-btn {
+      margin-top: 10px;
+      width: 100%;
+      background: #10b981;
+      color: #fff;
+      padding: 9px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="admin-card">
+    <h2>🛠️ Birthday Admin Panel</h2>
+    <p class="desc">Fill in the details for a new birthday person. It will automatically put "HAPPY", "BIRTHDAY", "DEAR", and their Name on the 4 photos!</p>
+
+    <label>Birthday Person's Name</label>
+    <input type="text" id="nameInput" placeholder="e.g. Khushi" value="Khushi" />
+
+    <label>4-Digit Passcode</label>
+    <input type="text" id="passInput" maxlength="4" placeholder="e.g. 2005" value="2005" />
+
+    <label>Photo 1 URL (Caption: "HAPPY")</label>
+    <input type="text" id="p1" placeholder="Paste image link or filename (e.g. pic1.jpg)" />
+
+    <label>Photo 2 URL (Caption: "BIRTHDAY")</label>
+    <input type="text" id="p2" placeholder="Paste image link or filename (e.g. pic2.jpg)" />
+
+    <label>Photo 3 URL (Caption: "DEAR")</label>
+    <input type="text" id="p3" placeholder="Paste image link or filename (e.g. pic3.jpg)" />
+
+    <label>Photo 4 URL (Caption: "[Name]!")</label>
+    <input type="text" id="p4" placeholder="Paste image link or filename (e.g. pic4.jpg)" />
+
+    <label>Birthday Letter Message (Typed out with Typewriter Effect)</label>
+    <textarea id="letterInput" rows="5"></textarea>
+
+    <div class="btn-row">
+      <button class="btn-save" onclick="saveAndGenerate()">Save & Generate Link 🔗</button>
+      <button class="btn-open" onclick="window.location.href='index.html'">Preview Site ↗</button>
+    </div>
+
+    <div class="share-box" id="shareBox">
+      <div style="font-size: 0.85rem; font-weight: 600; color: #ff9500;">✅ Shareable Link Ready!</div>
+      <p style="font-size: 0.76rem; color: #94a3b8; margin-top: 3px;">Send this link to your friend — it contains all their custom settings:</p>
+      <input type="text" id="shareUrl" readonly />
+      <button class="copy-btn" onclick="copyShareLink()">Copy Link 📋</button>
+    </div>
+  </div>
+
+  <script>
+    const defaultPhotos = [
+      "https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1464349153735-7db50ed83c84?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1527529482837-4698179dc6ce?auto=format&fit=crop&w=600&q=80"
+    ];
+
+    // Load existing config if saved
+    window.onload = () => {
+      const saved = localStorage.getItem('bday_custom_config');
+      if (saved) {
+        const data = JSON.parse(saved);
+        document.getElementById('nameInput').value = data.name || "Khushi";
+        document.getElementById('passInput').value = data.passcode || "2005";
+        document.getElementById('p1').value = (data.photoUrls && data.photoUrls[0]) || defaultPhotos[0];
+        document.getElementById('p2').value = (data.photoUrls && data.photoUrls[1]) || defaultPhotos[1];
+        document.getElementById('p3').value = (data.photoUrls && data.photoUrls[2]) || defaultPhotos[2];
+        document.getElementById('p4').value = (data.photoUrls && data.photoUrls[3]) || defaultPhotos[3];
+        document.getElementById('letterInput').value = data.letterText || "";
+      } else {
+        document.getElementById('p1').value = defaultPhotos[0];
+        document.getElementById('p2').value = defaultPhotos[1];
+        document.getElementById('p3').value = defaultPhotos[2];
+        document.getElementById('p4').value = defaultPhotos[3];
+        document.getElementById('letterInput').value = "Hi Khushi,\n\nWishing you a very Happy Birthday! May this new year of your life bring you lots of happiness, good health, and great success in everything you do.\n\nKeep smiling, enjoy your special day to the fullest, and have an awesome year ahead!\n\nBest wishes,\nYour Friend 🎉";
+      }
+    };
+
+    function saveAndGenerate() {
+      const name = document.getElementById('nameInput').value.trim() || "Friend";
+      const passcode = document.getElementById('passInput').value.trim() || "2005";
+      const photoUrls = [
+        document.getElementById('p1').value.trim() || defaultPhotos[0],
+        document.getElementById('p2').value.trim() || defaultPhotos[1],
+        document.getElementById('p3').value.trim() || defaultPhotos[2],
+        document.getElementById('p4').value.trim() || defaultPhotos[3]
+      ];
+      const letterText = document.getElementById('letterInput').value;
+
+      const configData = { name, passcode, photoUrls, letterText };
+
+      // Save locally for previewing on the same device
+      localStorage.setItem('bday_custom_config', JSON.stringify(configData));
+
+      // Encode into shareable URL so it works on ANY friend's phone
+      const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(configData))));
+      const baseUrl = window.location.href.replace(/admin\.html.*$/, 'index.html');
+      const fullShareUrl = `${baseUrl}?data=${encoded}`;
+
+      document.getElementById('shareUrl').value = fullShareUrl;
+      document.getElementById('shareBox').style.display = 'block';
+    }
+
+    function copyShareLink() {
+      const input = document.getElementById('shareUrl');
+      input.select();
+      navigator.clipboard.writeText(input.value);
+      alert("Link copied! Send this link to your friend.");
+    }
+  </script>
+</body>
+</html>
